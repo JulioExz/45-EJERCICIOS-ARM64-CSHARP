@@ -1,0 +1,23 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Identifica numeros primos
+# Descripción      : Identifica numeros primos 
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# Requisitos       : Python 3.6+
+# ------------------------------------------------------------------------------
+def es_primo(n):
+    if n <= 1:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+# Ejemplo de uso
+n = int(input("Ingrese un número para verificar si es primo: "))
+if es_primo(n):
+    print(f"{n} es un número primo")
+else:
+    print(f"{n} no es un número primo")
