@@ -1,0 +1,20 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Serie de fibonacci
+# Descripción      : Da los primeros n terminos de la serie de fibonacci
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# Requisitos       : Python 3.6+
+# ------------------------------------------------------------------------------
+def fibonacci(n):
+    serie = [0, 1]
+    for i in range(2, n):
+        siguiente = serie[-1] + serie[-2]
+        serie.append(siguiente)
+    return serie[:n]
+
+# Ejemplo de uso
+n = int(input("Ingrese el número de términos para la serie de Fibonacci: "))
+resultado = fibonacci(n)
+print(f"Los primeros {n} términos de la serie de Fibonacci son: {resultado}")
