@@ -1,0 +1,17 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Multiplicacion de 2 numeros
+# Descripción      : Multiplica 2 numeros
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# Requisitos       : Python 3.6+
+# ------------------------------------------------------------------------------
+def multiplicacion(a, b):
+    return a * b
+
+# Ejemplo de uso
+num1 = float(input("Ingrese el primer número: "))
+num2 = float(input("Ingrese el segundo número: "))
+resultado = multiplicacion(num1, num2)
+print(f"La multiplicación de {num1} y {num2} es {resultado}")
