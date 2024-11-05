@@ -1,0 +1,16 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Suma 2 numeros naturales
+# Descripción      : Suma 2 numeros naturales
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# Requisitos       : Python 3.6+
+# ------------------------------------------------------------------------------
+def suma_n_numeros(n):
+    return n * (n + 1) // 2
+
+# Ejemplo de uso
+n = int(input("Ingrese el valor de N: "))
+resultado = suma_n_numeros(n)
+print(f"La suma de los primeros {n} números naturales es {resultado}")
