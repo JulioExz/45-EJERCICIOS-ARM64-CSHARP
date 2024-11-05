@@ -1,0 +1,25 @@
+  GNU nano 7.2                                                                    factorial.py                                                                             
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Muestra el resultado factorial de un numero
+# Descripción      : Muestra el resultado factorial de un numero
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# Requisitos       : Python 3.6+
+# ------------------------------------------------------------------------------
+def factorial(n):
+    if n < 0:
+        return "El factorial no está definido para números negativos"
+    elif n == 0 or n == 1:
+        return 1
+    else:
+        resultado = 1
+        for i in range(2, n + 1):
+            resultado *= i
+        return resultado
+
+# Ejemplo de uso
+n = int(input("Ingrese un número para calcular su factorial: "))
+resultado = factorial(n)
+print(f"El factorial de {n} es {resultado}")
