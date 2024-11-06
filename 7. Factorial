@@ -6,20 +6,45 @@
 # Fecha            : [05-11-2024]
 # Versión          : 1.0
 # Arquitectura     : ARM64 en AWS EC2
-# Requisitos       : Python 3.6+
 # ------------------------------------------------------------------------------
-def factorial(n):
-    if n < 0:
-        return "El factorial no está definido para números negativos"
-    elif n == 0 or n == 1:
-        return 1
-    else:
-        resultado = 1
-        for i in range(2, n + 1):
-            resultado *= i
-        return resultado
+REFERENCIA
+using System;
 
-# Ejemplo de uso
-n = int(input("Ingrese un número para calcular su factorial: "))
-resultado = factorial(n)
-print(f"El factorial de {n} es {resultado}")
+class Program {
+    static void Main() {
+        int n = 5;
+        int factorial = 1;
+        for (int i = 1; i <= n; i++) {
+            factorial *= i;
+        }
+        Console.WriteLine("Factorial: " + factorial);
+    }
+}
+--------------------------------------------------------------------------------------
+    .section .data
+msg_fact:
+    .asciz "Factorial: %d\n"
+
+    .section .text
+    .global _start
+
+_start:
+    mov x0, 5                  // Valor de n
+    mov x2, 1                  // Inicializar factorial en 1
+factorial_loop:
+    cmp x0, 1                  // Comparar n con 1
+    ble end_factorial          // Si n <= 1, fin del bucle
+    mul x2, x2, x0             // factorial *= n
+    sub x0, x0, 1              // n--
+    b factorial_loop           // Repetir el bucle
+
+end_factorial:
+    // Imprimir resultado
+    mov x0, 1
+    ldr x1, =msg_fact
+    mov x8, 64
+    svc 0
+
+    mov x0, 0
+    mov x8, 93
+    svc 0
