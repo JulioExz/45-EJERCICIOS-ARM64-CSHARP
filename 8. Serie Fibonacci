@@ -5,16 +5,57 @@
 # Fecha            : [05-11-2024]
 # Versión          : 1.0
 # Arquitectura     : ARM64 en AWS EC2
-# Requisitos       : Python 3.6+
 # ------------------------------------------------------------------------------
-def fibonacci(n):
-    serie = [0, 1]
-    for i in range(2, n):
-        siguiente = serie[-1] + serie[-2]
-        serie.append(siguiente)
-    return serie[:n]
+REFERENCIA
+using System;
 
-# Ejemplo de uso
-n = int(input("Ingrese el número de términos para la serie de Fibonacci: "))
-resultado = fibonacci(n)
-print(f"Los primeros {n} términos de la serie de Fibonacci son: {resultado}")
+class Program {
+    static void Main() {
+        int n = 10; // Número de términos de Fibonacci a generar
+        int a = 0, b = 1;
+        Console.Write("Fibonacci: ");
+        for (int i = 0; i < n; i++) {
+            Console.Write(a + " ");
+            int temp = a;
+            a = b;
+            b = temp + b;
+        }
+    }
+}
+----------------------------------------------------------------------------------
+
+    .section .data
+msg_fib:
+    .asciz "Fibonacci: %d\n"
+
+    .section .text
+    .global _start
+
+_start:
+    mov x0, 10                // Número de términos de Fibonacci a generar
+    mov x1, 0                 // Primer término (a)
+    mov x2, 1                 // Segundo término (b)
+
+fibonacci_loop:
+    cmp x0, 0                 // Verificar si se han generado todos los términos
+    beq end_fibonacci         // Salir del bucle si x0 == 0
+
+    // Imprimir el término actual (a)
+    mov x3, 1
+    ldr x4, =msg_fib
+    mov x8, 64
+    svc 0
+
+    // Calcular el siguiente término de la serie
+    add x5, x1, x2            // temp = a + b
+    mov x1, x2                // a = b
+    mov x2, x5                // b = temp
+    sub x0, x0, 1             // n--
+
+    b fibonacci_loop          // Repetir el bucle
+
+end_fibonacci:
+    // Salida del programa
+    mov x0, 0
+    mov x8, 93
+    svc 0
