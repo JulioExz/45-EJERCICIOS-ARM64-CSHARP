@@ -5,15 +5,38 @@
 # Fecha            : [05-11-2024]
 # Versión          : 1.0
 # Arquitectura     : ARM64 en AWS EC2
-# Requisitos       : Python 3.6+
 # ------------------------------------------------------------------------------
-def division(a, b):
-    if b == 0:
-        return "Error: División por cero no permitida."
-    return a / b
+REFERENCIA
+using System;
 
-# Ejemplo de uso
-num1 = float(input("Ingrese el primer número: "))
-num2 = float(input("Ingrese el segundo número: "))
-resultado = division(num1, num2)
-print(f"La división de {num1} entre {num2} es {resultado}")
+class Program {
+    static void Main() {
+        int a = 10, b = 2;
+        int quotient = a / b;
+        Console.WriteLine("División: " + quotient);
+    }
+}
+---------------------------------------------------------------------------------
+    .section .data
+msg_quotient:
+    .asciz "División: %d\n"
+
+    .section .text
+    .global _start
+
+_start:
+    mov x0, 10                 // Dividendo
+    mov x1, 2                  // Divisor
+    udiv x2, x0, x1            // División x0 / x1 en x2
+
+    // Imprimir resultado
+    mov x0, 1
+    ldr x1, =msg_quotient
+    mov x8, 64
+    svc 0
+
+    mov x0, 0
+    mov x8, 93
+    svc 0
+
+
