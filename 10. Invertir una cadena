@@ -5,12 +5,66 @@
 # Fecha            : [05-11-2024]
 # Versión          : 1.0
 # Arquitectura     : ARM64 en AWS EC2
-# Requisitos       : Python 3.6+
 # ------------------------------------------------------------------------------
-def invertir_cadena(cadena):
-    return cadena[::-1]
+REFERENCIA
+using System;
 
-# Ejemplo de uso
-cadena = input("Ingrese una cadena para invertir: ")
-resultado = invertir_cadena(cadena)
-print(f"La cadena invertida es: {resultado}")
+class Program {
+    static void Main() {
+        char[] str = "Hello".ToCharArray();
+        Array.Reverse(str);
+        Console.WriteLine(new string(str));
+    }
+}
+-------------------------------------------------------------------------------------
+    .section .data
+original_str:
+    .asciz "Hello"
+msg_reverse:
+    .asciz "Cadena invertida: %s\n"
+
+    .section .text
+    .global _start
+
+_start:
+    ldr x0, =original_str     // Apuntador a la cadena original
+    mov x1, 0                 // Índice inicial
+
+    // Calcular longitud de la cadena
+calculate_length:
+    ldrb w2, [x0, x1]
+    cbz w2, reverse_string    // Si es el final de la cadena (carácter nulo), iniciar inversión
+    add x1, x1, 1
+    b calculate_length
+
+reverse_string:
+    sub x1, x1, 1             // Longitud - 1 para obtener el último índice
+    mov x2, 0                 // Índice inicial
+
+reverse_loop:
+    cmp x2, x1                // Comparar índices
+    bge end_reverse           // Si x2 >= x1, terminar inversión
+
+    // Intercambiar caracteres en x2 y x1
+    ldrb w3, [x0, x2]         // Leer carácter en índice x2
+    ldrb w4, [x0, x1]         // Leer carácter en índice x1
+    strb w4, [x0, x2]         // Escribir carácter de x1 en x2
+    strb w3, [x0, x1]         // Escribir carácter de x2 en x1
+
+    // Actualizar índices
+    add x2, x2, 1
+    sub x1, x1, 1
+    b reverse_loop            // Repetir el bucle
+
+end_reverse:
+    // Imprimir cadena invertida
+    mov x0, 1
+    ldr x1, =msg_reverse
+    ldr x2, =original_str
+    mov x8, 64
+    svc 0
+
+    // Salida del programa
+    mov x0, 0
+    mov x8, 93
+    svc 0
