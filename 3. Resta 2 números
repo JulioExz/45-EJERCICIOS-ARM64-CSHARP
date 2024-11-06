@@ -7,11 +7,35 @@
 # Arquitectura     : ARM64 en AWS EC2
 # Requisitos       : Python 3.6+
 # ------------------------------------------------------------------------------
-def resta(a, b):
-    return a - b
+REFERENCIA 
+using System;
 
-# Ejemplo de uso
-num1 = float(input("Ingrese el primer número: "))
-num2 = float(input("Ingrese el segundo número: "))
-resultado = resta(num1, num2)
-print(f"La resta de {num1} menos {num2} es {resultado}")
+class Program {
+    static void Main() {
+        int a = 5, b = 3;
+        int diff = a - b;
+        Console.WriteLine("Resta: " + diff);
+    }
+}
+--------------------------------------------------------------------------------
+    .section .data
+msg_diff:
+    .asciz "Resta: %d\n"
+
+    .section .text
+    .global _start
+
+_start:
+    mov x0, 5                  // Primer número
+    mov x1, 3                  // Segundo número
+    sub x2, x0, x1             // Resta x0 - x1 en x2
+
+    // Imprimir resultado
+    mov x0, 1
+    ldr x1, =msg_diff
+    mov x8, 64
+    svc 0
+
+    mov x0, 0
+    mov x8, 93
+    svc 0
