@@ -7,12 +7,39 @@
 # Arquitectura     : ARM64 en AWS EC2
 # Requisitos       : Python 3.6+
 # ------------------------------------------------------------------------------
+#       // Conversión de Celsius a Fahrenheit
+# using System;
+#     class Program {
+#       static void Main() {
+#           double celsius = 25;
+#           double fahrenheit = (celsius * 9 / 5) + 32;
+#           Console.WriteLine("Fahrenheit: " + fahrenheit);
+#     }
+#   }
+# }
+# -------------------------------------------------------------------------------
 
-def celsius_a_fahrenheit(celsius):
-    fahrenheit = (celsius * 9/5) + 32
-    return fahrenheit
+    .section .data
+msg:
+    .asciz "Fahrenheit: %f\n"
 
-# Ejemplo de uso
-temperatura_celsius = float(input("Introduce la temperatura en grados Celsius: "))
-temperatura_fahrenheit = celsius_a_fahrenheit(temperatura_celsius)
-print(f"{temperatura_celsius} grados Celsius son {temperatura_fahrenheit} grados Fahrenheit.")
+    .section .text
+    .global _start
+
+_start:
+    mov x0, 25                 // Valor en Celsius
+    mov x1, 9
+    mul x2, x0, x1             // Celsius * 9
+    mov x1, 5
+    udiv x2, x2, x1            // (Celsius * 9) / 5
+    add x2, x2, 32             // + 32 para obtener Fahrenheit
+
+    // Preparar impresión del resultado
+    mov x0, 1
+    ldr x1, =msg
+    mov x8, 64
+    svc 0
+
+    mov x0, 0
+    mov x8, 93
+    svc 0
