@@ -7,64 +7,98 @@
 # Arquitectura     : ARM64 en AWS EC2
 # ------------------------------------------------------------------------------
 REFERENCIA
-using System;
+public class StringReverser {
+    public static string ReverseString(string input) {
+        
+        char[] charArray = input.ToCharArray();
+        int left = 0;
+        int right = charArray.Length - 1;
 
-class Program {
-    static void Main() {
-        char[] str = "Hello".ToCharArray();
-        Array.Reverse(str);
-        Console.WriteLine(new string(str));
+       
+        while (left < right) {
+          
+            char temp = charArray[left];
+            charArray[left] = charArray[right];
+            charArray[right] = temp;
+            
+            // Move indices toward center
+            left++;
+            right--;
+        }
+        return new string(charArray);
+    }
+    public static void Main() {
+        string test = "Hello, World!";
+        string reversed = ReverseString(test);
+        Console.WriteLine($"Original: {test}");
+        Console.WriteLine($"Reversed: {reversed}");
     }
 }
 -------------------------------------------------------------------------------------
-    .section .data
-original_str:
-    .asciz "Hello"
-msg_reverse:
-    .asciz "Cadena invertida: %s\n"
+.data
+    string:     .asciz "Hello, World!"    // Input string to reverse
+    str_len:    .quad 13                  // Length of string
+    newline:    .asciz "\n"              // Newline character
 
-    .section .text
+    .text
     .global _start
 
 _start:
-    ldr x0, =original_str     // Apuntador a la cadena original
-    mov x1, 0                 // Índice inicial
-
-    // Calcular longitud de la cadena
-calculate_length:
-    ldrb w2, [x0, x1]
-    cbz w2, reverse_string    // Si es el final de la cadena (carácter nulo), iniciar inversión
-    add x1, x1, 1
-    b calculate_length
-
-reverse_string:
-    sub x1, x1, 1             // Longitud - 1 para obtener el último índice
-    mov x2, 0                 // Índice inicial
+    // Load string address and length
+    adr x0, string         // x0 = address of string
+    ldr x1, str_len       // x1 = length of string
+    
+    // Initialize indices
+    mov x2, #0            // x2 = left index
+    sub x3, x1, #1        // x3 = right index (length - 1)
 
 reverse_loop:
-    cmp x2, x1                // Comparar índices
-    bge end_reverse           // Si x2 >= x1, terminar inversión
+    // Check if we're done (left >= right)
+    cmp x2, x3
+    bge done
+    
+    // Load characters from both ends
+    ldrb w4, [x0, x2]     // w4 = string[left]
+    ldrb w5, [x0, x3]     // w5 = string[right]
+    
+    // Swap characters
+    strb w5, [x0, x2]     // string[left] = string[right]
+    strb w4, [x0, x3]     // string[right] = string[left]
+    
+    // Move indices
+    add x2, x2, #1        // left++
+    sub x3, x3, #1        // right--
+    
+    b reverse_loop        // Continue loop
 
-    // Intercambiar caracteres en x2 y x1
-    ldrb w3, [x0, x2]         // Leer carácter en índice x2
-    ldrb w4, [x0, x1]         // Leer carácter en índice x1
-    strb w4, [x0, x2]         // Escribir carácter de x1 en x2
-    strb w3, [x0, x1]         // Escribir carácter de x2 en x1
+done:
+    // Print reversed string
+    mov x0, #1            // file descriptor (1 = stdout)
+    adr x1, string        // address of string to print
+    ldr x2, str_len       // length of string
+    mov x8, #64           // syscall number (64 = write)
+    svc #0                // make syscall
+    
+    // Print newline
+    mov x0, #1            // file descriptor (1 = stdout)
+    adr x1, newline       // address of newline
+    mov x2, #1            // length of newline
+    mov x8, #64           // syscall number (64 = write)
+    svc #0                // make syscall
+    
+    // Exit program
+    mov x0, #0            // return code 0
+    mov x8, #93           // syscall number (93 = exit)
+    svc #0                // make syscall
 
-    // Actualizar índices
-    add x2, x2, 1
-    sub x1, x1, 1
-    b reverse_loop            // Repetir el bucle
-
-end_reverse:
-    // Imprimir cadena invertida
-    mov x0, 1
-    ldr x1, =msg_reverse
-    ldr x2, =original_str
-    mov x8, 64
-    svc 0
-
-    // Salida del programa
-    mov x0, 0
-    mov x8, 93
+/*
+Register usage:
+x0 = string address / syscall parameter
+x1 = string length / syscall parameter
+x2 = left index
+x3 = right index
+w4 = temporary storage for left character
+w5 = temporary storage for right character
+x8 = syscall number
+*/
     svc 0
