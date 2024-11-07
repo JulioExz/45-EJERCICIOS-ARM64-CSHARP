@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------
 # Nombre del Programa: Invertir una cadena
-# Descripción      : Invierte una cadena 
+# Descripción      : Invierte una cadena ingresada por el usuario 
 # Autor            : [De Haro Exzacarias Julio Cesar]
 # Fecha            : [05-11-2024]
 # Versión          : 1.0
@@ -35,70 +35,62 @@ public class StringReverser {
     }
 }
 -------------------------------------------------------------------------------------
-.data
-    string:     .asciz "Hello, World!"    // Input string to reverse
-    str_len:    .quad 13                  // Length of string
-    newline:    .asciz "\n"              // Newline character
+   .data
+msg_prompt: .asciz "Ingresa una cadena de texto: " // Mensaje para solicitar la cadena
+msg_result: .asciz "La cadena invertida es: %s\n" // Mensaje para imprimir la cadena invertida
 
     .text
-    .global _start
+    .global main
 
-_start:
-    // Load string address and length
-    adr x0, string         // x0 = address of string
-    ldr x1, str_len       // x1 = length of string
-    
-    // Initialize indices
-    mov x2, #0            // x2 = left index
-    sub x3, x1, #1        // x3 = right index (length - 1)
+main:
+    // Guardar el puntero de marco y el enlace de retorno
+    stp x29, x30, [sp, -16]! // Reservar espacio en la pila
+    mov x29, sp // Establecer el puntero de marco
+    sub sp, sp, #256 // Reservar espacio para la cadena de entrada (máximo 255 caracteres)
 
+    // Solicitar la cadena de texto
+    ldr x0, =msg_prompt // Cargar el mensaje para solicitar la cadena
+    bl printf // Imprimir el mensaje
+    ldr x0, =input_format // Cargar el formato para leer una cadena
+    mov x1, sp // Dirección donde se guardará la cadena en la pila
+    bl scanf // Leer la cadena desde el usuario
+
+    // Encontrar el final de la cadena (buscando el carácter nulo '\0')
+    mov x2, sp // Dirección de la cadena
+find_end:
+    ldrb w3, [x2] // Cargar el siguiente byte de la cadena
+    cmp w3, #0 // Verificar si es el carácter nulo ('\0')
+    beq reverse_string // Si es el final de la cadena, salir del bucle
+    add x2, x2, #1 // Avanzar al siguiente carácter
+    b find_end // Continuar buscando
+
+reverse_string:
+    // x2 contiene la dirección del carácter nulo ('\0'), retrocedemos una posición
+    sub x2, x2, #1 // Retroceder una posición, apuntar al último carácter válido
+
+    // Iniciar el proceso de invertir la cadena
+    mov x3, sp // Dirección inicial de la cadena
 reverse_loop:
-    // Check if we're done (left >= right)
-    cmp x2, x3
-    bge done
-    
-    // Load characters from both ends
-    ldrb w4, [x0, x2]     // w4 = string[left]
-    ldrb w5, [x0, x3]     // w5 = string[right]
-    
-    // Swap characters
-    strb w5, [x0, x2]     // string[left] = string[right]
-    strb w4, [x0, x3]     // string[right] = string[left]
-    
-    // Move indices
-    add x2, x2, #1        // left++
-    sub x3, x3, #1        // right--
-    
-    b reverse_loop        // Continue loop
+    cmp x3, x2 // Comparar los punteros
+    bge end_reverse // Si los punteros se cruzan, terminamos
+    ldrb w4, [x3] // Cargar el carácter de la posición inicial
+    ldrb w5, [x2] // Cargar el carácter de la posición final
+    strb w5, [x3] // Colocar el carácter final en la posición inicial
+    strb w4, [x2] // Colocar el carácter inicial en la posición final
+    add x3, x3, #1 // Avanzar el puntero inicial
+    sub x2, x2, #1 // Retroceder el puntero final
+    b reverse_loop // Continuar invirtiendo
 
-done:
-    // Print reversed string
-    mov x0, #1            // file descriptor (1 = stdout)
-    adr x1, string        // address of string to print
-    ldr x2, str_len       // length of string
-    mov x8, #64           // syscall number (64 = write)
-    svc #0                // make syscall
-    
-    // Print newline
-    mov x0, #1            // file descriptor (1 = stdout)
-    adr x1, newline       // address of newline
-    mov x2, #1            // length of newline
-    mov x8, #64           // syscall number (64 = write)
-    svc #0                // make syscall
-    
-    // Exit program
-    mov x0, #0            // return code 0
-    mov x8, #93           // syscall number (93 = exit)
-    svc #0                // make syscall
+end_reverse:
+    // Imprimir la cadena invertida
+    ldr x0, =msg_result // Cargar el mensaje para mostrar el resultado
+    mov x1, sp // Dirección de la cadena invertida
+    bl printf // Imprimir la cadena invertida
 
-/*
-Register usage:
-x0 = string address / syscall parameter
-x1 = string length / syscall parameter
-x2 = left index
-x3 = right index
-w4 = temporary storage for left character
-w5 = temporary storage for right character
-x8 = syscall number
-*/
-    svc 0
+    // Restaurar el puntero de pila y regresar
+    add sp, sp, #256 // Restaurar el puntero de pila
+    ldp x29, x30, [sp], 16 // Restaurar el puntero de marco y el enlace de retorno
+    ret // Regresar del programa
+
+    .data
+input_format: .asciz "%255s" // Formato para leer una cadena de hasta 255 caracteres
