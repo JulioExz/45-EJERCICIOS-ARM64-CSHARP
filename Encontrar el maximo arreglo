@@ -1,0 +1,215 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Encontrar el maximo arreglo
+# Descripción      : Encuentra el maximo arreglo
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# ------------------------------------------------------------------------------
+public class ArrayMaxFinder {
+    public static int FindMaximum(int[] array) {
+        // Check for empty array
+        if (array == null || array.Length == 0) {
+            throw new ArgumentException("Array cannot be null or empty");
+        }
+
+        // Start with first element as maximum
+        int max = array[0];
+
+        // Compare with rest of elements
+        for (int i = 1; i < array.Length; i++) {
+            if (array[i] > max) {
+                max = array[i];
+            }
+        }
+
+        return max;
+    }
+
+    // Example usage
+    public static void Main() {
+        // Test arrays
+        int[] numbers1 = { 4, 2, 9, 7, 5, 1, 8, 3, 6 };
+        int[] numbers2 = { -5, -2, -9, -1, -7 };
+        
+        // Find and print maximum for first array
+        int max1 = FindMaximum(numbers1);
+        Console.WriteLine("Array 1: [" + string.Join(", ", numbers1) + "]");
+        Console.WriteLine("Maximum: " + max1);
+        
+        // Find and print maximum for second array
+        int max2 = FindMaximum(numbers2);
+        Console.WriteLine("\nArray 2: [" + string.Join(", ", numbers2) + "]");
+        Console.WriteLine("Maximum: " + max2);
+    }
+}
+# -------------------------------------------------------------------------------
+.data
+    // Test array
+    array:      .quad   4, 2, 9, 7, 5, 1, 8, 3, 6
+    array_size: .quad   9
+    
+    msg_max:    .asciz  "Maximum value is: "
+    newline:    .asciz  "\n"
+    
+    .text
+    .global _start
+
+_start:
+    // Initialize array parameters
+    adr x0, array         // x0 = base address of array
+    ldr x1, array_size    // x1 = size of array
+    
+    // Call find_maximum subroutine
+    bl find_maximum
+    
+    // x0 now contains the maximum value
+    // Save it for later
+    mov x19, x0
+    
+    // Print "Maximum value is: " message
+    mov x0, #1            // file descriptor (stdout)
+    adr x1, msg_max       // message address
+    mov x2, #17           // message length
+    mov x8, #64           // syscall: write
+    svc #0
+    
+    // Convert maximum value to string and print it
+    mov x0, x19
+    bl print_number
+    
+    // Print newline
+    mov x0, #1
+    adr x1, newline
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    
+    // Exit program
+    mov x0, #0
+    mov x8, #93
+    svc #0
+
+find_maximum:
+    // Input:
+    // x0 = array address
+    // x1 = array size
+    // Output:
+    // x0 = maximum value
+    
+    // Load first element as initial maximum
+    ldr x2, [x0]         // max = array[0]
+    mov x3, #1           // i = 1
+    
+loop:
+    // Check if we've processed all elements
+    cmp x3, x1
+    bge done
+    
+    // Load current element
+    lsl x4, x3, #3       // x4 = i * 8 (for quad word addressing)
+    ldr x5, [x0, x4]     // x5 = array[i]
+    
+    // Compare with current maximum
+    cmp x5, x2
+    ble continue         // if array[i] <= max, skip update
+    mov x2, x5          // update max if array[i] > max
+    
+continue:
+    add x3, x3, #1      // i++
+    b loop
+    
+done:
+    mov x0, x2          // return maximum value
+    ret
+
+print_number:
+    // Input: x0 = number to print
+    // Note: This is a simplified version that only handles positive numbers
+    // You would want a more robust version for production use
+    
+    // Save registers
+    stp x29, x30, [sp, #-16]!
+    stp x19, x20, [sp, #-16]!
+    
+    // Allocate buffer on stack (20 bytes should be enough for 64-bit number)
+    sub sp, sp, #32
+    mov x19, sp         // Save buffer address
+    
+    // Initialize
+    mov x20, #0         // Digit count
+    mov x2, #10         // Divisor
+    
+convert_loop:
+    // Divide number by 10
+    udiv x3, x0, x2     // x3 = number / 10
+    msub x4, x3, x2, x0 // x4 = number % 10
+    
+    // Convert remainder to ASCII and store
+    add x4, x4, #'0'
+    strb w4, [x19, x20]
+    
+    // Update number and count
+    mov x0, x3
+    add x20, x20, #1
+    
+    // Continue if number not zero
+    cbnz x0, convert_loop
+    
+    // Reverse the digits
+    mov x0, x19         // Start of buffer
+    mov x1, x20         // Number of digits
+    bl reverse_string
+    
+    // Print the number
+    mov x0, #1          // stdout
+    mov x1, x19         // buffer
+    mov x2, x20         // length
+    mov x8, #64         // write syscall
+    svc #0
+    
+    // Restore stack and registers
+    add sp, sp, #32
+    ldp x19, x20, [sp], #16
+    ldp x29, x30, [sp], #16
+    ret
+
+reverse_string:
+    // Input:
+    // x0 = string address
+    // x1 = string length
+    
+    sub x1, x1, #1      // end = length - 1
+    mov x2, #0          // start = 0
+    
+reverse_loop:
+    cmp x2, x1
+    bge reverse_done
+    
+    // Swap characters
+    ldrb w3, [x0, x2]
+    ldrb w4, [x0, x1]
+    strb w4, [x0, x2]
+    strb w3, [x0, x1]
+    
+    add x2, x2, #1
+    sub x1, x1, #1
+    b reverse_loop
+    
+reverse_done:
+    ret
+
+/*
+Register usage in find_maximum:
+x0 = array address / return value
+x1 = array size
+x2 = current maximum
+x3 = loop counter (i)
+x4 = temporary offset calculation
+x5 = current array element
+
+Register usage in print routines:
+x19 = buffer address
+x20 = digit count
+x2-x4 = temporary calculations
+*/
