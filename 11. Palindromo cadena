@@ -1,0 +1,156 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Revisar si es un palindromo
+# Descripción      : Crea la conversion de celcius a fahrenheit
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# Requisitos       : Python 3.6+
+# ------------------------------------------------------------------------------
+public class PalindromeChecker {
+    public static bool IsPalindrome(string str) {
+        // Remove spaces and convert to lowercase for more flexible matching
+        str = str.Replace(" ", "").ToLower();
+        
+        // Initialize pointers for both ends
+        int left = 0;
+        int right = str.Length - 1;
+        
+        // Compare characters from both ends moving towards center
+        while (left < right) {
+            // If characters don't match, it's not a palindrome
+            if (str[left] != str[right]) {
+                return false;
+            }
+            left++;
+            right--;
+        }
+        
+        // If we get here, it's a palindrome
+        return true;
+    }
+
+    // Example usage
+    public static void Main() {
+        string[] testCases = {
+            "racecar",
+            "A man a plan a canal Panama",
+            "hello",
+            "Madam Im Adam"
+        };
+
+        foreach (string test in testCases) {
+            bool isPalindrome = IsPalindrome(test);
+            Console.WriteLine($"'{test}' is {(isPalindrome ? "" : "not ")}a palindrome");
+        }
+    }
+}
+# -------------------------------------------------------------------------------
+.data
+    string:         .asciz "racecar"       // Test string
+    str_len:        .quad 7                // Length of test string
+    is_pal_msg:     .asciz " is a palindrome\n"
+    not_pal_msg:    .asciz " is not a palindrome\n"
+    
+    .text
+    .global _start
+
+_start:
+    // Setup for palindrome check
+    adr x0, string         // x0 = address of string
+    ldr x1, str_len       // x1 = length of string
+    
+    // Initialize indices
+    mov x2, #0            // x2 = left index
+    sub x3, x1, #1        // x3 = right index (length - 1)
+
+check_palindrome:
+    // Check if we're done (left >= right)
+    cmp x2, x3
+    bge is_palindrome     // If we made it here, it's a palindrome
+    
+    // Load characters from both ends
+    ldrb w4, [x0, x2]     // w4 = string[left]
+    ldrb w5, [x0, x3]     // w5 = string[right]
+    
+    // Convert both characters to lowercase
+    bl to_lower_w4
+    bl to_lower_w5
+    
+    // Compare characters
+    cmp w4, w5
+    bne not_palindrome    // If they don't match, not a palindrome
+    
+    // Move indices
+    add x2, x2, #1        // left++
+    sub x3, x3, #1        // right--
+    
+    b check_palindrome    // Continue checking
+
+to_lower_w4:
+    // Convert character in w4 to lowercase if it's uppercase
+    cmp w4, #'A'
+    blt done_lower_w4
+    cmp w4, #'Z'
+    bgt done_lower_w4
+    add w4, w4, #32       // Convert to lowercase
+done_lower_w4:
+    ret
+
+to_lower_w5:
+    // Convert character in w5 to lowercase if it's uppercase
+    cmp w5, #'A'
+    blt done_lower_w5
+    cmp w5, #'Z'
+    bgt done_lower_w5
+    add w5, w5, #32       // Convert to lowercase
+done_lower_w5:
+    ret
+
+is_palindrome:
+    // Print original string
+    mov x0, #1            // file descriptor (1 = stdout)
+    adr x1, string        // address of string
+    ldr x2, str_len       // length of string
+    mov x8, #64           // syscall number (write)
+    svc #0
+    
+    // Print "is a palindrome" message
+    mov x0, #1
+    adr x1, is_pal_msg
+    mov x2, #17           // length of message
+    mov x8, #64
+    svc #0
+    b exit
+
+not_palindrome:
+    // Print original string
+    mov x0, #1
+    adr x1, string
+    ldr x2, str_len
+    mov x8, #64
+    svc #0
+    
+    // Print "is not a palindrome" message
+    mov x0, #1
+    adr x1, not_pal_msg
+    mov x2, #21           // length of message
+    mov x8, #64
+    svc #0
+
+exit:
+    // Exit program
+    mov x0, #0            // return code 0
+    mov x8, #93           // syscall number (exit)
+    svc #0
+
+/*
+Register usage:
+x0 = string address / syscall parameter
+x1 = string length / syscall parameter
+x2 = left index
+x3 = right index
+w4 = left character
+w5 = right character
+x8 = syscall number
+*/
