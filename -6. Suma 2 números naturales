@@ -1,0 +1,81 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Suma n numeros naturales
+# Descripción      : Pide un numero al usuario y calcula la suma de los primeros n números naturales
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# ------------------------------------------------------------------------------
+REFERENCIA
+using System;
+
+class Program {
+    static void Main() {
+        int N = 10;
+        int sum = N * (N + 1) / 2;
+        Console.WriteLine("Suma: " + sum);
+    }
+}
+--------------------------------------------------------------------------------
+.section .data
+prompt:
+    .asciz "Ingrese un número: "
+newline:
+    .asciz "\n"
+
+.section .bss
+.lcomm number, 4
+
+.section .text
+.global _start
+
+_start:
+    // Mostrar mensaje de entrada
+    mov x0, 1                      // File descriptor de salida estándar (stdout)
+    ldr x1, =prompt                 // Dirección del mensaje de prompt
+    mov x2, 17                      // Longitud del mensaje
+    mov x8, 64                      // Syscall write
+    svc 0
+
+    // Leer número ingresado
+    mov x0, 0                       // File descriptor de entrada estándar (stdin)
+    ldr x1, =number                 // Dirección de almacenamiento del número
+    mov x2, 1                       // Leer 1 byte
+    mov x8, 63                      // Syscall read
+    svc 0
+
+    // Cargar el número ingresado y convertirlo de ASCII a entero
+    ldrb w0, [x1]                   // Cargar número en w0
+    sub w0, w0, '0'                 // Convertir de ASCII a entero
+
+    // Calcular la suma de los primeros n números
+    mov w1, 0                       // Inicializar la suma en w1
+sum_loop:
+    cmp w0, 0                       // Comparar si w0 es 0
+    ble end_sum                     // Si w0 <= 0, salir del loop
+    add w1, w1, w0                  // w1 = w1 + w0
+    sub w0, w0, 1                   // w0 = w0 - 1
+    b sum_loop                      // Saltar al inicio del loop
+
+end_sum:
+    // Convertir el resultado a ASCII para impresión
+    add w1, w1, '0'                 // Convertir el valor de w1 a ASCII
+
+    // Imprimir el resultado
+    mov x0, 1                       // File descriptor de salida estándar (stdout)
+    mov x2, 1                       // Longitud de un carácter
+    strb w1, [sp, -1]!              // Almacenar w1 en la pila como byte
+    mov x1, sp                      // Dirección del carácter en la pila
+    mov x8, 64                      // Syscall write
+    svc 0
+
+    // Imprimir nueva línea
+    mov x0, 1
+    ldr x1, =newline
+    mov x2, 1
+    mov x8, 64
+    svc 0
+
+    // Salir del programa
+    mov x8, 93                      // Syscall exit
+    svc 0
