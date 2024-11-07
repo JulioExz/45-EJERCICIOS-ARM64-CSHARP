@@ -1,0 +1,157 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Divide dos numeros
+# Descripción      : Divide 2 numeros e impide dividir entre 0
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# ------------------------------------------------------------------------------
+REFERENCIA
+using System;
+
+class Program {
+    static void Main() {
+        int a = 10, b = 2;
+        int quotient = a / b;
+        Console.WriteLine("División: " + quotient);
+    }
+}
+---------------------------------------------------------------------------------
+.data
+    prompt1: .string "Enter first number: "
+    prompt2: .string "Enter second number: "
+    result: .string "Result is: "
+    error_msg: .string "Error: Cannot divide by zero\n"
+    newline: .string "\n"
+    buffer: .skip 12
+    num1: .word 0
+    num2: .word 0
+
+.text
+.global _start
+
+_start:
+    // Print first prompt
+    mov x0, #1          // stdout
+    adr x1, prompt1     // message
+    mov x2, #19         // length
+    mov x8, #64         // write syscall
+    svc #0
+
+    // Read first number
+    mov x0, #0          // stdin
+    adr x1, buffer      // buffer
+    mov x2, #12         // buffer size
+    mov x8, #63         // read syscall
+    svc #0
+    
+    // Convert string to number for num1
+    adr x1, buffer
+    mov w3, #0          // Initialize result
+parse1:
+    ldrb w2, [x1], #1   // Load byte and increment
+    cmp w2, #'\n'       // Check for newline
+    beq parse1_done
+    sub w2, w2, #'0'    // Convert ASCII to number
+    lsl w4, w3, #3      // x8
+    lsl w5, w3, #1      // x2
+    add w3, w4, w5      // x10
+    add w3, w3, w2      // Add new digit
+    b parse1
+parse1_done:
+    adr x0, num1
+    str w3, [x0]        // Store first number
+
+    // Print second prompt
+    mov x0, #1
+    adr x1, prompt2
+    mov x2, #20
+    mov x8, #64
+    svc #0
+
+    // Read second number
+    mov x0, #0
+    adr x1, buffer
+    mov x2, #12
+    mov x8, #63
+    svc #0
+
+    // Convert string to number for num2
+    adr x1, buffer
+    mov w3, #0
+parse2:
+    ldrb w2, [x1], #1
+    cmp w2, #'\n'
+    beq parse2_done
+    sub w2, w2, #'0'
+    lsl w4, w3, #3      // x8
+    lsl w5, w3, #1      // x2
+    add w3, w4, w5      // x10
+    add w3, w3, w2
+    b parse2
+parse2_done:
+    adr x0, num2
+    str w3, [x0]
+
+    // Check for division by zero
+    adr x0, num2
+    ldr w2, [x0]
+    cmp w2, #0
+    beq division_by_zero
+
+    // Divide numbers
+    adr x0, num1
+    ldr w1, [x0]
+    udiv w3, w1, w2     // Divide: num1 / num2
+
+    // Print "Result is: "
+    mov x0, #1
+    adr x1, result
+    mov x2, #11
+    mov x8, #64
+    svc #0
+
+    // Convert result to string and print
+    mov w1, w3          // Copy result for conversion
+    adr x0, buffer
+    add x0, x0, #11     // Start from end of buffer
+    mov w2, #'\n'
+    strb w2, [x0]       // Store newline
+    sub x0, x0, #1
+    
+    // Convert number to string
+    mov w4, #10         // Divisor
+convert:
+    udiv w5, w1, w4     // Divide by 10
+    msub w6, w5, w4, w1 // Get remainder
+    add w6, w6, #'0'    // Convert to ASCII
+    strb w6, [x0]       // Store digit
+    sub x0, x0, #1      // Move pointer back
+    mov w1, w5          // Set up for next iteration
+    cmp w1, #0
+    bne convert
+
+    // Print result
+    add x0, x0, #1      // Move to first digit
+    mov x2, #12         // Buffer size
+    mov x0, #1          // stdout
+    adr x1, buffer      // Buffer address
+    mov x8, #64         // write syscall
+    svc #0
+
+    b exit
+
+division_by_zero:
+    // Print error message
+    mov x0, #1
+    adr x1, error_msg
+    mov x2, #26         // Length of error message
+    mov x8, #64
+    svc #0
+
+exit:
+    // Exit program
+    mov x0, #0
+    mov x8, #93
+    svc #0
+
