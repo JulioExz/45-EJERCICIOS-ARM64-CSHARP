@@ -7,55 +7,74 @@
 # Arquitectura     : ARM64 en AWS EC2
 # ------------------------------------------------------------------------------
 REFERENCIA
-using System;
-
-class Program {
-    static void Main() {
-        int n = 10; // Número de términos de Fibonacci a generar
-        int a = 0, b = 1;
-        Console.Write("Fibonacci: ");
-        for (int i = 0; i < n; i++) {
-            Console.Write(a + " ");
-            int temp = a;
-            a = b;
-            b = temp + b;
+public class Fibonacci {
+    public static void PrintFibonacci(int n) {
+        int first = 0, second = 1;
+        
+        Console.Write($"{first} {second} ");
+        
+        for (int i = 2; i < n; i++) {
+            int next = first + second;
+            Console.Write($"{next} ");
+            first = second;
+            second = next;
         }
     }
 }
 ----------------------------------------------------------------------------------
 
-    .section .data
-msg_fib:
-    .asciz "Fibonacci: %d\n"
-
-    .section .text
-    .global _start
-
+.global _start
+    .text
 _start:
-    mov x0, 10                // Número de términos de Fibonacci a generar
-    mov x1, 0                 // Primer término (a)
-    mov x2, 1                 // Segundo término (b)
+    // Initialize registers
+    mov x19, #0          // first number (0)
+    mov x20, #1          // second number (1)
+    mov x21, #10         // n (number of terms to generate)
+    mov x22, #2          // counter i = 2
+    
+    // Print first number
+    mov x0, x19
+    bl print_num
+    
+    // Print second number
+    mov x0, x20
+    bl print_num
+    
+loop:
+    // Check if we've printed enough numbers
+    cmp x22, x21
+    bge end
+    
+    // Calculate next number
+    add x23, x19, x20    // next = first + second
+    
+    // Print the number
+    mov x0, x23
+    bl print_num
+    
+    // Update values
+    mov x19, x20         // first = second
+    mov x20, x23         // second = next
+    add x22, x22, #1     // i++
+    b loop
+    
+end:
+    // Exit program
+    mov x0, #0
+    mov x8, #93
+    svc #0
 
-fibonacci_loop:
-    cmp x0, 0                 // Verificar si se han generado todos los términos
-    beq end_fibonacci         // Salir del bucle si x0 == 0
-
-    // Imprimir el término actual (a)
-    mov x3, 1
-    ldr x4, =msg_fib
-    mov x8, 64
-    svc 0
-
-    // Calcular el siguiente término de la serie
-    add x5, x1, x2            // temp = a + b
-    mov x1, x2                // a = b
-    mov x2, x5                // b = temp
-    sub x0, x0, 1             // n--
-
-    b fibonacci_loop          // Repetir el bucle
-
-end_fibonacci:
-    // Salida del programa
-    mov x0, 0
-    mov x8, 93
-    svc 0
+print_num:
+    // Function to print a number
+    // Preserve registers
+    stp x29, x30, [sp, #-16]!
+    mov x29, sp
+    
+    // Convert number to string and print
+    // Note: This is a simplified version. In practice,
+    // you'd need more code to properly convert integers to string
+    // and handle system calls for printing
+    
+    // Restore registers and return
+    ldp x29, x30, [sp], #16
+    ret
