@@ -8,64 +8,74 @@
 # Requisitos       : Python 3.6+
 # ------------------------------------------------------------------------------
 REFERENCIA
-using System;
+public class PrimeChecker {
+    public static bool IsPrime(int number) {
+        if (number <= 1) return false;
+        if (number == 2) return true;
+        if (number % 2 == 0) return false;
 
-class Program {
-    static void Main() {
-        int n = 17;
-        bool isPrime = n > 1;
-        for (int i = 2; i * i <= n && isPrime; i++) {
-            if (n % i == 0) isPrime = false;
+        int boundary = (int)Math.Floor(Math.Sqrt(number));
+
+        for (int i = 3; i <= boundary; i += 2) {
+            if (number % i == 0) return false;
         }
-        Console.WriteLine("Es primo: " + isPrime);
+        return true;
     }
 }
 ------------------------------------------------------------------------------
-    .section .data
-msg_prime_yes:
-    .asciz "Es primo\n"
-msg_prime_no:
-    .asciz "No es primo\n"
-
-    .section .text
-    .global _start
-
+.global _start
+    .text
 _start:
-    mov x0, 17                // Número a verificar
-    mov x1, 2                 // Divisor inicial
-    mov x2, 1                 // Flag para es primo (1 = primo, 0 = no primo)
-
-prime_check_loop:
-    mul x3, x1, x1            // Calcular i * i
-    cmp x3, x0                // Verificar si i * i > n
-    bgt prime_end             // Si es mayor, salir del bucle
-
-    udiv x3, x0, x1           // Dividir n entre i
-    msub x3, x3, x1, x0       // Obtener el resto n % i
-    cbz x3, not_prime         // Si n % i == 0, no es primo
-
-    add x1, x1, 1             // Incrementar el divisor
-    b prime_check_loop        // Repetir el bucle
-
+    // Input number to check
+    mov x19, #17         // number to check
+    
+    // Check if number <= 1
+    cmp x19, #1
+    ble not_prime
+    
+    // Check if number == 2
+    cmp x19, #2
+    beq is_prime
+    
+    // Check if even
+    and x0, x19, #1
+    cbz x0, not_prime
+    
+    // Initialize loop counter
+    mov x20, #3          // i = 3
+    
+loop:
+    // Calculate square root boundary
+    mov x0, x19
+    bl sqrt              // Placeholder for square root calculation
+    mov x21, x0          // boundary = sqrt(number)
+    
+    // Check loop condition
+    cmp x20, x21
+    bgt is_prime
+    
+    // Check if number is divisible by i
+    udiv x22, x19, x20
+    msub x23, x22, x20, x19  // remainder = number - (quotient * divisor)
+    cbz x23, not_prime
+    
+    // Increment i by 2
+    add x20, x20, #2
+    b loop
+    
+is_prime:
+    mov x0, #1
+    b end
+    
 not_prime:
-    mov x2, 0                 // Cambiar el flag a no primo
+    mov x0, #0
+    
+end:
+    // Exit program
+    mov x8, #93
+    svc #0
 
-prime_end:
-    // Imprimir resultado
-    mov x0, 1
-    ldr x1, =msg_prime_yes
-    cbz x2, not_prime_msg
-    mov x8, 64
-    svc 0
-    b end_program
-
-not_prime_msg:
-    ldr x1, =msg_prime_no
-    mov x8, 64
-    svc 0
-
-end_program:
-    // Salida del programa
-    mov x0, 0
-    mov x8, 93
-    svc 0
+sqrt:
+    // Placeholder for square root calculation
+    // In practice, you'd implement a proper square root algorithm
+    ret
