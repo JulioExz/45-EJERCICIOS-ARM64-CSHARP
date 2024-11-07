@@ -1,0 +1,64 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Busqueda lineal
+# Descripción      : Busca linealmente un target en un arreglo
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# ------------------------------------------------------------------------------
+public class LinearSearch
+{
+    public static int Search(int[] array, int target)
+    {
+        if (array == null)
+            return -1;
+            
+        for (int i = 0; i < array.Length; i++)
+        {
+            if (array[i] == target)
+                return i;
+        }
+        
+        return -1;  // Element not found
+    }
+}
+# -------------------------------------------------------------------------------
+.global linear_search
+    .text
+
+// Parameters:
+// X0: array address
+// X1: array length
+// X2: target value to find
+linear_search:
+    // Input validation
+    cbz     x0, not_found      // If array is null, return -1
+    cbz     x1, not_found      // If length is 0, return -1
+
+    // Initialize counter
+    mov     w3, #0             // w3 = i = 0 (loop counter)
+
+loop:
+    cmp     w3, w1             // Compare i with array length
+    b.ge    not_found          // If i >= length, element not found
+    
+    // Load current element
+    lsl     w4, w3, #2         // w4 = i * 4 (multiply by 4 for int size)
+    add     x4, x0, x4         // x4 = array + i*4
+    ldr     w5, [x4]           // w5 = array[i]
+    
+    // Compare with target
+    cmp     w5, w2             // Compare array[i] with target
+    b.ne    continue           // If not equal, continue loop
+    
+    // Element found - return index
+    mov     w0, w3             // Return index i
+    ret
+
+continue:
+    add     w3, w3, #1         // i++
+    b       loop               // Continue loop
+
+not_found:
+    mov     w0, #-1            // Return -1 (not found)
+    ret
