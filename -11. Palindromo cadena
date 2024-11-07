@@ -5,7 +5,6 @@
 # Fecha            : [05-11-2024]
 # Versión          : 1.0
 # Arquitectura     : ARM64 en AWS EC2
-# Requisitos       : Python 3.6+
 # ------------------------------------------------------------------------------
 public class PalindromeChecker {
     public static bool IsPalindrome(string str) {
