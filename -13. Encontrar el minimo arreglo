@@ -28,7 +28,7 @@ public class MinFinder
 .section .data
     // Mensajes para interactuar con el usuario
     msg_input:    .string "Ingrese un número (0 para terminar): "
-    msg_result:   .string "El máximo es: %d\n"
+    msg_result:   .string "El mínimo es: %d\n"
     fmt_input:    .string "%d"
     
     // Arreglo para almacenar números
@@ -69,7 +69,7 @@ input_loop:
     add sp, sp, #16
 
     // Verificar si es 0 (terminar)
-    cbz w21, find_max
+    cbz w21, find_min
 
     // Guardar número en el arreglo
     str w21, [x19, x20, lsl #2]
@@ -79,14 +79,14 @@ input_loop:
     cmp x20, #100
     b.lt input_loop
 
-find_max:
+find_min:
     // Verificar si hay elementos
     cbz x20, end
 
-    // Llamar a encontrar_maximo
+    // Llamar a encontrar_minimo
     mov x0, x19              // Dirección del arreglo
     mov x1, x20              // Número de elementos
-    bl encontrar_maximo
+    bl encontrar_minimo
 
     // Imprimir resultado
     mov x1, x0
@@ -100,24 +100,28 @@ end:
     ldp x29, x30, [sp], #16
     ret
 
-// Función para encontrar el máximo en un arreglo
+// Función para encontrar el mínimo en un arreglo
 // Parámetros: x0 = puntero al arreglo, x1 = número de elementos
-// Retorno: x0 = valor máximo
-encontrar_maximo:
-    cbz x1, max_fin          // Si no hay elementos, retornar
+// Retorno: x0 = valor mínimo
+encontrar_minimo:
+    // Verificar si hay elementos
+    cbz x1, min_fin         // Si no hay elementos, retornar
     
-    ldr w2, [x0]            // Primer elemento como máximo inicial
-    mov x4, x0              // Guardar puntero
-    mov x3, x1              // Copiar contador
+    ldr w2, [x0]           // Primer elemento como mínimo inicial
+    mov x4, x0             // Guardar puntero original
+    mov x3, x1             // Copiar contador
+    sub x3, x3, #1         // Ajustar contador para el bucle
     
-max_loop:
-    ldr w5, [x4, #4]!       // Cargar siguiente elemento
-    cmp w5, w2              // Comparar con máximo actual
-    csel w2, w5, w2, gt     // Seleccionar el mayor
+min_loop:
+    cbz x3, min_fin        // Si no hay más elementos, terminar
     
-    subs x3, x3, #1         // Decrementar contador
-    cbnz x3, max_loop       // Continuar si no terminamos
+    ldr w5, [x4, #4]!      // Cargar siguiente elemento
+    cmp w5, w2             // Comparar con mínimo actual
+    csel w2, w5, w2, lt    // Seleccionar el menor
     
-max_fin:
-    mov w0, w2              // Retornar máximo
+    subs x3, x3, #1        // Decrementar contador
+    b.ne min_loop          // Continuar si no hemos terminado
+    
+min_fin:
+    mov w0, w2             // Retornar mínimo
     ret
