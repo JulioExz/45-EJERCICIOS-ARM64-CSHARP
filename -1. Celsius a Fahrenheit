@@ -1,0 +1,108 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Celcius a fahrenheit
+# Descripción      : Crea la conversion de celcius a fahrenheit
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [05-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# ------------------------------------------------------------------------------
+       // Conversión de Celsius a Fahrenheit
+ using System;
+     class Program {
+       static void Main() {
+           double celsius = 25;
+           double fahrenheit = (celsius * 9 / 5) + 32;
+           Console.WriteLine("Fahrenheit: " + fahrenheit);
+     }
+   }
+ }
+# -------------------------------------------------------------------------------
+
+    .section .data
+msg_input:
+    .asciz "Ingrese la temperatura en Celsius: "
+msg_output:
+    .asciz "Fahrenheit: "
+
+    .section .bss
+input_buffer:   .skip 10       // Reservar 10 bytes para la entrada
+
+    .section .text
+    .global _start
+
+_start:
+    // Imprimir el mensaje para que el usuario ingrese la temperatura en Celsius
+    mov x0, 1                 // File descriptor para salida estándar
+    ldr x1, =msg_input        // Dirección del mensaje
+    mov x2, 27                // Longitud del mensaje
+    mov x8, 64                // Número de llamada del sistema para write
+    svc 0
+
+    // Leer la entrada del usuario (temperatura en Celsius)
+    mov x0, 0                 // File descriptor para entrada estándar
+    ldr x1, =input_buffer     // Dirección del buffer para guardar la entrada
+    mov x2, 10                // Número de bytes a leer
+    mov x8, 63                // Número de llamada del sistema para read
+    svc 0
+
+    // Convertir la entrada de cadena a número
+    ldr x1, =input_buffer     // Dirección del buffer
+    mov x2, 0                 // Inicializar el valor del número en 0
+convert_loop:
+    ldrb w3, [x1], #1         // Cargar un byte de la cadena
+    cmp w3, 10                // Comprobar si es el carácter de nueva línea (fin de la cadena)
+    beq convert_done          // Si es un salto de línea, terminamos
+    sub w3, w3, '0'           // Convertir el carácter a número
+    mov w4, w2                // Mover el valor actual a w4
+    // Multiplicación por 10: duplicamos el valor de w2 y lo sumamos a w4
+    add w2, w2, w2            // Duplicar el valor de w2 (multiplicar por 2)
+    add w2, w2, w4            // Sumar el valor original de w2 para multiplicar por 10
+    add w2, w2, w3            // Añadir el valor del dígito
+    b convert_loop            // Continuar con el siguiente carácter
+
+convert_done:
+    mov x0, x2                // La entrada del usuario ahora está en x0 (temperatura en Celsius)
+
+    // Realizar la conversión de Celsius a Fahrenheit: (Celsius * 9 / 5) + 32
+    mov x1, 9                 // Multiplicar por 9
+    mul x2, x0, x1            // Celsius * 9
+    mov x1, 5                 // Dividir entre 5
+    udiv x2, x2, x1           // (Celsius * 9) / 5
+    add x2, x2, 32            // + 32 para obtener Fahrenheit
+
+    // Convertir el número Fahrenheit a cadena
+    mov x1, x2                // Número de Fahrenheit en x1
+    mov x2, 10                // Preparar buffer para convertir el número
+    ldr x3, =input_buffer     // Usamos el buffer de entrada como buffer para la salida
+    mov x4, 0                 // Inicializamos el índice
+
+convert_fahrenheit:
+    udiv x5, x1, x2           // Dividir número por 10
+    mul x6, x5, x2            // Multiplicar el cociente por 10
+    sub x7, x1, x6            // Obtener el residuo
+    add x7, x7, '0'           // Convertir a carácter ASCII
+    strb w7, [x3, x4]         // Guardar el carácter en el buffer
+    add x4, x4, 1             // Incrementar índice
+    mov x1, x5                // Actualizar el valor de x1
+    cmp x1, 0                 // Verificar si el cociente es 0
+    bne convert_fahrenheit    // Continuar si no es 0
+
+    // Imprimir el mensaje "Fahrenheit: "
+    mov x0, 1                 // File descriptor para salida estándar
+    ldr x1, =msg_output       // Dirección del mensaje
+    mov x2, 12                // Longitud del mensaje
+    mov x8, 64                // Número de llamada del sistema para write
+    svc 0
+
+    // Imprimir el valor de Fahrenheit
+    mov x0, 1                 // File descriptor para salida estándar
+    ldr x1, =input_buffer     // Dirección del buffer con la salida
+    mov x2, 10                // Longitud máxima para la salida
+    mov x8, 64                // Número de llamada del sistema para write
+    svc 0
+
+    // Salir del programa
+    mov x0, 0                 // Código de salida
+    mov x8, 93                // Número de llamada del sistema para exit
+    svc 0
+
