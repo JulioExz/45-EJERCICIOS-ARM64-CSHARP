@@ -1,6 +1,7 @@
 # ------------------------------------------------------------------------------
 # Nombre del Programa: MCD Y MCM
-# Descripción      : Desplazamiento en una cadena 
+# Descripción      : Programa que calcula el MCD y MCM
+// de dos números usando el algoritmo de Euclides
 # Autor            : [De Haro Exzacarias Julio Cesar]
 # Fecha            : [12-11-2024]
 # Versión          : 1.0
