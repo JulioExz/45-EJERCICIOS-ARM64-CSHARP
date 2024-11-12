@@ -1,0 +1,75 @@
+# ------------------------------------------------------------------------------
+# Nombre del Programa: Entero a ASCII  
+# Descripción      : Convierte un dato entero a tipo ASCII 
+# Autor            : [De Haro Exzacarias Julio Cesar]
+# Fecha            : [12-11-2024]
+# Versión          : 1.0
+# Arquitectura     : ARM64 en AWS EC2
+# ------------------------------------------------------------------------------
+using System;
+
+class Program
+{
+    static void Main()
+    {
+        // Mensajes
+        string msgIngreso = "Ingrese un número entero (0-9): ";
+        string msgResultado = "El carácter ASCII es: {0}\n";
+
+        // Mostrar mensaje de ingreso
+        Console.Write(msgIngreso);
+
+        // Leer número entero ingresado por el usuario
+        if (int.TryParse(Console.ReadLine(), out int numero) && numero >= 0 && numero <= 9)
+        {
+            // Convertir entero a carácter ASCII
+            char caracterASCII = (char)(numero + '0');
+
+            // Mostrar resultado
+            Console.WriteLine(msgResultado, caracterASCII);
+        }
+        else
+        {
+            Console.WriteLine("Entrada no válida. Por favor, ingrese un número entre 0 y 9.");
+        }
+    }
+}
+# -------------------------------------------------------------------------------
+    .data
+msg_ingreso:    .string "Ingrese un número (0-9): "
+msg_resultado:  .string "El valor entero es: %d\n"
+formato_char:   .string " %c"    // Espacio antes de %c para ignorar whitespace
+buffer:         .skip 2          // Buffer para almacenar el carácter
+
+    .text
+    .global main
+    .align 2
+
+main:
+    // Prólogo
+    stp     x29, x30, [sp, -16]!
+    mov     x29, sp
+
+    // Mostrar mensaje de ingreso
+    adr     x0, msg_ingreso
+    bl      printf
+
+    // Leer carácter
+    adr     x0, formato_char
+    adr     x1, buffer
+    bl      scanf
+
+    // Convertir ASCII a entero
+    adr     x0, buffer
+    ldrb    w0, [x0]            // Cargar el carácter
+    sub     w0, w0, #48         // Restar 48 (ASCII '0') para obtener el valor
+
+    // Mostrar resultado
+    mov     w1, w0              // Mover resultado a w1 para printf
+    adr     x0, msg_resultado
+    bl      printf
+
+    // Epílogo y retorno
+    mov     w0, #0
+    ldp     x29, x30, [sp], 16
+    ret
